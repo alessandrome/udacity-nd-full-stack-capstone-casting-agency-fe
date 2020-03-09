@@ -30,6 +30,19 @@
                                 :rules="[inputRules.required]"
                             ></v-select>
                         </v-flex>
+                        <v-flex v-if="can('read:movie')" xs12>
+                            <v-autocomplete
+                                v-model="actorMovies"
+                                :items="computedMovieList"
+                                item-value="id"
+                                item-text="title"
+                                :search-input.sync="moviesSearchInput"
+                                multiple
+                                return-object
+                                :label="$tc('movie', 2)"
+                                :rules="[inputRules.required]"
+                            ></v-autocomplete>
+                        </v-flex>
                     </v-layout>
                 </v-form>
             </v-card-text>
@@ -45,13 +58,15 @@
 </template>
 
 <script>
+    import AuthMixin from '@/mixins/AuthMixin';
     import InputRulesMixin from "@/mixins/InputRulesMixin";
-    import VDialog from "vuetify/lib/components/VDialog/index";
+    import VDialog from "@/mixins/VDialogComponentMixin";
     import ActorApi from "@/api/actors";
+    import MovieApi from "@/api/movies";
 
     export default {
         name: "ActorsSaveActorDialog",
-        mixins: [InputRulesMixin],
+        mixins: [AuthMixin, InputRulesMixin, VDialog],
         props: {
             actor: {
                 type: Object,
@@ -68,12 +83,23 @@
                 actorName: '',
                 actorAge: 0,
                 actorGender: '',
+                actorMovies: [],
+                movieList: [],
+                moviesSearchInput: null,
+                movieSearchPage: 1,
+                movieSearchPerPage: 20,
+                movieLoadCounter: 0,
+                isLoadingMovies: false,
                 rules: {
                     required: (val) => !!val || this.$t('error_input_field_required')
                 },
             }
         },
         computed: {
+            computedMovieList() {
+                let computedList = [...this.actorMovies, ...this.movieList];
+                return computedList;
+            },
             showDialog: {
                 get() {
                     return this.value;
@@ -84,9 +110,20 @@
             },
         },
         watch: {
+            value: {
+                immediate: true,
+                handler(isOpen) {
+                    if (isOpen && this.can('read:movie') && !this.moviesSearchInput) {
+                        this.$nextTick(() => {this.moviesSearchInput = '';});
+                    }
+                }
+            },
             actor(newValue) {
                 this.setActorData(newValue);
-            }
+            },
+            moviesSearchInput(searchInput) {
+                this.loadMovies(true);
+            },
         },
         methods: {
             saveActor() {
@@ -104,10 +141,17 @@
                     age: this.actorAge,
                     gender: this.actorGender,
                 };
-                let result = await ActorApi.requests.createActor(data);
-                console.log({result});
-                this.$emit('create:actor', result.data);
-                this.$emit('save:actor', result.data);
+                if (this.can('read:movie')) {
+                    data.movies = this.actorMovies.map(m => m.id);
+                }
+                await ActorApi.requests.createActor(data)
+                    .then(response => {
+                        this.$emit('create:actor', response.data);
+                        this.$emit('save:actor', response.data);
+                    })
+                    .catch(response => {
+
+                    });
             },
             async editActor() {
                 let data = {
@@ -115,10 +159,17 @@
                     age: this.actorAge,
                     gender: this.actorGender,
                 };
-                let result = await ActorApi.requests.patchActor(this.actorId, data);
-                console.log({result});
-                this.$emit('update:actor', result.data);
-                this.$emit('save:actor', result.data);
+                if (this.can('read:movie')) {
+                    data.movies = this.actorMovies.map(m => m.id);
+                }
+                await ActorApi.requests.patchActor(this.actorId, data)
+                    .then(response => {
+                        this.$emit('update:actor', response.data);
+                        this.$emit('save:actor', response.data);
+                    })
+                    .catch(response => {
+
+                    });
             },
             setActorData(actor) {
                 if (actor) {
@@ -126,11 +177,30 @@
                     this.actorName = actor.name || '';
                     this.actorAge = actor.age || 0;
                     this.actorGender = actor.gender || 0;
+                    this.actorMovies = actor.movies || [];
                 } else {
                     this.actorId = 0;
                     this.actorName = '';
                     this.actorAge = 0;
                     this.actorGender = '';
+                    this.actorMovies = [];
+                }
+            },
+            async loadMovies(reset) {
+                if (reset) {
+                    this.movieList = []
+                }
+                let loadCounter = ++this.movieLoadCounter;
+                this.isLoadingMovies = true;
+                await MovieApi.requests.getMovies({}, {search_term: this.moviesSearchInput}, this.movieSearchPage, this.movieSearchPerPage)
+                    .then(response => {
+                        this.movieList.push(...response.data.items);
+                    })
+                    .catch(response => {
+
+                    });
+                if (loadCounter === this.movieLoadCounter) {
+                    this.isLoadingMovies = false;
                 }
             }
         },
@@ -145,5 +215,5 @@
     .v-card
         &__text
             padding-left 16px
-            padding-right  16px
+            padding-right 16px
 </style>

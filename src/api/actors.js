@@ -4,6 +4,16 @@ const BASE_URL = process.env.VUE_APP_BASE_API_URL;
 const requests = {
     /**
      * Get API request to get actors list from API endpoint
+     * @param id
+     * @returns {Promise<AxiosResponse<T>>}
+     */
+    getActor(id) {
+        return axios.
+            get(`${BASE_URL}/actors/${id}`);
+    },
+
+    /**
+     * Get API request to get actors list from API endpoint
      * @param data
      * @param filters
      * @param page

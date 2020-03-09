@@ -1,6 +1,6 @@
 <template>
     <v-container fluid>
-        <actors-save-actor-dialog v-model="isActorSaveDialogOpen" :actor="openedActor" @save:actor="closeSaveActorDialog"></actors-save-actor-dialog>
+        <actors-save-actor-dialog v-model="isActorSaveDialogOpen" :actor="openedActor" @save:actor="actorSaved"></actors-save-actor-dialog>
         <v-layout column>
             <v-flex filter-row>
                 <v-layout>
@@ -31,12 +31,13 @@
                 >
                     <template v-slot:item.action="{ item }">
                         <v-icon
-                            v-if="can('update:actor')"
+                            v-if="can('update:actor') && !item._is_loading_detail"
                             small
-                            @click="openSaveActorDialog(item)"
+                            @click="loadActorDetail(item)"
                         >
                             create
                         </v-icon>
+                        <v-progress-circular v-else-if="item._is_loading_detail" width="2" indeterminate size="16"></v-progress-circular>
                     </template>
                     <template v-slot:item.gender="{ item }">
                         <span>{{$tc(item.gender, 1)}}</span>
@@ -124,6 +125,21 @@
                     if (filterCount === this.filterCount)
                         this.loadActors(true);
                 }, 300);
+            },
+            actorSaved() {
+                this.closeSaveActorDialog();
+                this.loadActors();
+            },
+            async loadActorDetail(actor) {
+                this.$set(actor, '_is_loading_detail', true);
+                await ActorApi.requests.getActor(actor.id)
+                    .then(response => {
+                        this.openSaveActorDialog(response.data);
+                    })
+                    .catch(response => {
+
+                    });
+                this.$set(actor, '_is_loading_detail', false);
             },
             openSaveActorDialog(actor) {
                 if (actor) {

@@ -1,6 +1,7 @@
 <template>
     <v-container fluid>
-        <movies-save-movie-dialog v-model="isMovieSaveDialogOpen" :movie="openedMovie" @save:movie="movieSaved"></movies-save-movie-dialog>
+        <movies-save-movie-dialog v-model="isMovieSaveDialogOpen" :movie="openedMovie"
+                                  @save:movie="movieSaved"></movies-save-movie-dialog>
         <v-layout column>
             <v-flex filter-row>
                 <v-layout>
@@ -30,14 +31,24 @@
                     class="v-data-table--full-page"
                 >
                     <template v-slot:item.action="{ item }">
-                        <v-icon
-                            v-if="can('update:movie') && !item._is_loading_detail"
-                            small
-                            @click="loadMovieDetail(item)"
-                        >
-                            create
-                        </v-icon>
-                        <v-progress-circular v-else-if="item._is_loading_detail" width="2" indeterminate size="16"></v-progress-circular>
+                        <template v-if="!item._is_loading_detail">
+                            <v-icon
+                                v-if="can('update:movie')"
+                                small
+                                @click="loadMovieDetail(item)"
+                            >
+                                create
+                            </v-icon>
+                            <v-icon
+                                v-if="can('delete:movie')"
+                                small
+                                @click="deleteMovie(item)"
+                            >
+                                delete
+                            </v-icon>
+                        </template>
+                        <v-progress-circular v-else-if="item._is_loading_detail" width="2" indeterminate
+                                             size="16"></v-progress-circular>
                     </template>
                     <template v-slot:item.gender="{ item }">
                         <span>{{$tc(item.gender, 1)}}</span>
@@ -52,7 +63,7 @@
     import AuthMixin from '@/mixins/AuthMixin';
     import MoviesSaveMovieDialog from "@/views/movies/MoviesSaveMovieDialog";
     import MovieApi from '@/api/movies';
-    
+
     export default {
         name: "Movies",
         mixins: [AuthMixin],
@@ -81,7 +92,7 @@
                 openedMovie: null,
             }
         },
-         watch: {
+        watch: {
             moviePerPage() {
                 this.loadMovies(true)
             },
@@ -140,6 +151,17 @@
                     });
                 this.$set(movie, '_is_loading_detail', false);
             },
+            async deleteMovie(movie) {
+                this.$set(movie, '_is_loading_detail', true);
+                await MovieApi.requests.deleteMovie(movie.id)
+                    .then(response => {
+                        this.loadMovies(true);
+                    })
+                    .catch(response => {
+
+                    });
+                this.$set(movie, '_is_loading_detail', false);
+            },
             openSaveMovieDialog(movie) {
                 if (movie) {
                     movie = Object.assign({}, movie)
@@ -148,7 +170,7 @@
                 this.isMovieSaveDialogOpen = true;
             },
             closeSaveMovieDialog() {
-                this.isMovieSaveDialogOpen =false;
+                this.isMovieSaveDialogOpen = false;
             }
         },
     }

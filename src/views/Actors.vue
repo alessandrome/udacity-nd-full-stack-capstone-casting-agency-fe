@@ -30,13 +30,22 @@
                     class="v-data-table--full-page"
                 >
                     <template v-slot:item.action="{ item }">
-                        <v-icon
-                            v-if="can('update:actor') && !item._is_loading_detail"
-                            small
-                            @click="loadActorDetail(item)"
-                        >
-                            create
-                        </v-icon>
+                        <template v-if="!item._is_loading_detail">
+                            <v-icon
+                                v-if="can('update:actor') && !item._is_loading_detail"
+                                small
+                                @click="loadActorDetail(item)"
+                            >
+                                create
+                            </v-icon>
+                            <v-icon
+                                v-if="can('delete:actor') && !item._is_loading_detail"
+                                small
+                                @click="deleteActor(item)"
+                            >
+                                delete
+                            </v-icon>
+                        </template>
                         <v-progress-circular v-else-if="item._is_loading_detail" width="2" indeterminate size="16"></v-progress-circular>
                     </template>
                     <template v-slot:item.gender="{ item }">
@@ -135,6 +144,17 @@
                 await ActorApi.requests.getActor(actor.id)
                     .then(response => {
                         this.openSaveActorDialog(response.data);
+                    })
+                    .catch(response => {
+
+                    });
+                this.$set(actor, '_is_loading_detail', false);
+            },
+            async deleteActor(actor) {
+                this.$set(actor, '_is_loading_detail', true);
+                await ActorApi.requests.deleteActor(actor.id)
+                    .then(response => {
+                        this.loadActors(true);
                     })
                     .catch(response => {
 

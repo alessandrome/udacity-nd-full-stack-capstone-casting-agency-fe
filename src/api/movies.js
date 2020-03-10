@@ -3,6 +3,16 @@ const BASE_URL = process.env.VUE_APP_BASE_API_URL;
 
 const requests = {
     /**
+     * Get API request to get movie from API endpoint
+     * @param id
+     * @returns {Promise<AxiosResponse<T>>}
+     */
+    getMovie(id) {
+        return axios.
+            get(`${BASE_URL}/movies/${id}`);
+    },
+
+    /**
      * Get API request to get movies list from API endpoint
      * @param data
      * @param filters

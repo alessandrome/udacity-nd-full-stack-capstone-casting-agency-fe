@@ -6,7 +6,7 @@
             <router-link to="/movies"><div class="page-link">{{$tc('movie', 2)}}</div></router-link>
         </v-layout>
         <div>
-            <router-link v-if="$auth.isAuthenticated && loggedUser" to="/profile" class="mr-2">{{loggedUser.name || '[profile]'}}</router-link>
+            <router-link v-if="$auth.isAuthenticated && loggedUser" to="#" class="mr-2">{{loggedUser.name || '[profile]'}}</router-link>
             <router-link to="/login">Login</router-link>
         </div>
     </nav>

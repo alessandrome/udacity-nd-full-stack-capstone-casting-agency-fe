@@ -1,0 +1,59 @@
+@import "utils.styl"
+
+html
+  overflow-y initial
+
+body
+  margin 0
+
+#app
+  font-family 'Avenir', Helvetica, Arial, sans-serif
+  -webkit-font-smoothing antialiased
+  -moz-osx-font-smoothing grayscale
+  text-align center
+  color #2c3e50
+  height 100vh
+  display flex
+  flex-direction column
+
+  > .v-application--wrap
+    height 100%
+
+#nav
+  flex: 0 0 60px
+  height 60px
+
+#content
+  flex 1 0 auto
+
+.container
+  padding 0
+
+  > .layout:only-child
+    height 100%
+
+.v-data-table
+  &--full-page
+    height 100%
+    display flex
+    flex-direction column
+    > .v-data-table__wrapper
+      flex 1 0 auto
+    > .v-data-footer
+      flex 0 0 auto
+
+.filter-row
+  flex 0 0 auto
+  padding 12px 12px
+  background #f2f8ff
+  > .layout
+    align-items center
+
+.v-dialog
+  &:not(&--fullscreen)
+    max-width 640px
+
+.layout
+  &--input
+    > *
+      padding 6px 8px
